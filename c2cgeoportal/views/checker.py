@@ -51,6 +51,16 @@ class Checker(object):  # pragma: no cover
         self.request = request
         self.settings = self.request.registry.settings["checker"]
 
+        self.default_headers = {
+            "Host": self.request.environ.get("HTTP_HOST") }
+        if self.request.headers.get('Cookie') != None:
+            self.default_headers['Cookie'] = self.request.headers.get('Cookie')
+
+    def _headers(self, extra={}):
+        headers = self.default_headers.copy()
+        headers.update(extra)
+        return headers
+
     def set_status(self, code, text):
         if int(code) >= self.status_int:
             self.status_int = int(code)
@@ -67,10 +77,9 @@ class Checker(object):  # pragma: no cover
         log.info("Checker for url: %s" % url)
 
         url = url.replace(self.request.environ.get("SERVER_NAME"), "localhost")
-        headers = {
-            "Host": self.request.environ.get("HTTP_HOST"),
-            "Cache-Control": "no-cache",
-        }
+        headers = self._headers({
+            "Cache-Control": "no-cache"
+        })
 
         resp, content = h.request(url, headers=headers)
 
@@ -156,10 +165,9 @@ class Checker(object):  # pragma: no cover
 
         log.info("Checker for printproxy request (create): %s" % _url)
         _url = _url.replace(self.request.environ.get("SERVER_NAME"), "localhost")
-        headers = {
-            "Content-Type": "application/json;charset=utf-8",
-            "Host": self.request.environ.get("HTTP_HOST")
-        }
+        headers = self._headers({
+            "Content-Type": "application/json;charset=utf-8"
+        })
         resp, content = h.request(_url, "POST", headers=headers, body=body)
 
         if resp.status != httplib.OK:
@@ -169,8 +177,7 @@ class Checker(object):  # pragma: no cover
         log.info("Checker for printproxy pdf (retrieve): %s" % _url)
         json = loads(content)
         _url = json["getURL"].replace(self.request.environ.get("SERVER_NAME"), "localhost")
-        headers = {"Host": self.request.environ.get("HTTP_HOST")}
-        resp, content = h.request(_url, headers=headers)
+        resp, content = h.request(_url, headers=self._headers())
 
         if resp.status != httplib.OK:
             self.set_status(resp.status, resp.reason)
@@ -190,10 +197,9 @@ class Checker(object):  # pragma: no cover
 
         log.info("Checker for printproxy request (create): %s" % _url)
         _url = _url.replace(self.request.environ.get("SERVER_NAME"), "localhost")
-        headers = {
-            "Content-Type": "application/json;charset=utf-8",
-            "Host": self.request.environ.get("HTTP_HOST")
-        }
+        headers = self._headers({
+            "Content-Type": "application/json;charset=utf-8"
+        })
         resp, content = h.request(_url, "POST", headers=headers, body=body)
 
         if resp.status != httplib.OK:
@@ -203,11 +209,10 @@ class Checker(object):  # pragma: no cover
         job = loads(content)
         _url = self.request.route_url("printproxy_status", ref=job["ref"])
         log.info("Checker for printproxy pdf status: %s" % _url)
-        headers = {"Host": self.request.environ.get("HTTP_HOST")}
         done = False
         while not done:
             sleep(1)
-            resp, content = h.request(_url, headers=headers)
+            resp, content = h.request(_url, headers=self._headers())
             if resp.status != httplib.OK:
                 self.set_status(resp.status, resp.reason)
                 return "Failed get the status: " + content
@@ -220,7 +225,7 @@ class Checker(object):  # pragma: no cover
 
         _url = self.request.route_url("printproxy_report_get", ref=job["ref"])
         log.info("Checker for printproxy pdf retrieve: %s" % _url)
-        resp, content = h.request(_url, headers=headers)
+        resp, content = h.request(_url, headers=self._headers())
 
         if resp.status != httplib.OK:
             self.set_status(resp.status, resp.reason)
@@ -241,9 +246,8 @@ class Checker(object):  # pragma: no cover
 
         log.info("Checker for fulltextsearch: %s" % _url)
         _url = _url.replace(self.request.environ.get("SERVER_NAME"), "localhost")
-        headers = {"host": self.request.environ.get("HTTP_HOST")}
 
-        resp, content = h.request(_url, headers=headers)
+        resp, content = h.request(_url, headers=self._headers())
 
         if resp.status != httplib.OK:
             self.set_status(resp.status, resp.reason)
@@ -296,9 +300,8 @@ class Checker(object):  # pragma: no cover
                 self.request.environ.get("SERVER_NAME"),
                 "localhost"
             )
-            headers = {"host": self.request.environ.get("HTTP_HOST")}
 
-            resp, content = h.request(interface_url, headers=headers)
+            resp, content = h.request(interface_url, headers=self._headers())
 
             if resp.status != httplib.OK:
                 self.set_status(resp.status, resp.reason)

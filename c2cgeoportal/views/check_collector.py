@@ -82,7 +82,9 @@ class CheckerCollector(object):  # pragma: no cover
 
         urlfragments = urlparse(url)
         localurl = "%s://localhost%s" % (urlfragments.scheme, urlfragments.path)
-        headers = {"Host": urlfragments.netloc}
+        headers = { "Host": urlfragments.netloc }
+        if self.request.headers.get('Cookie') != None:
+            headers['Cookie'] = self.request.headers.get('Cookie')
 
         resp, content = h.request(localurl, headers=headers)
 
