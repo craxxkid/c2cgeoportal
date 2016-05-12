@@ -974,3 +974,25 @@ class Shorturl(Base):
     creation = Column(DateTime)
     last_hit = Column(DateTime)
     nb_hits = Column(Integer)
+
+
+def db_chooser_tween_factory(handler, registry):  # pragma: nocover
+    """
+    Tween factory to route to a replica DB for read-only queries.
+    Must be put over the pyramid_tm tween and sqlahelper must have a "replica" engine
+    configured.
+    """
+    def db_chooser_tween(request):
+        session = DBSession()
+        old = session.bind
+        if request.method in ("GET", "OPTIONS"):
+            log.debug("Using replica database for %s %s" % (request.method, request.path))
+            session.bind = sqlahelper.get_engine("replica")
+        else:
+            log.debug("Using master database for %s %s" % (request.method, request.path))
+        try:
+            return handler(request)
+        finally:
+            session.bind = old
+
+    return db_chooser_tween
