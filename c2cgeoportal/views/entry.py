@@ -279,6 +279,9 @@ class Entry(object):
             elif layer.layer_type == "WMTS":
                 self._fill_wmts(l, layer, wms, wms_layers, errors)
         elif isinstance(layer, LayerWMS):
+            if layer.layer is None:
+                errors.append("The layer '{}' don't have any layers".format(layer.name))
+                return None, set()
             l["type"] = "WMS"
             l["layers"] = layer.layer
             if not self._fill_wms(l, layer, errors, role_id):
