@@ -536,7 +536,6 @@ class TestEntryView(TestCase):
         self.assertEquals(len(themes["themes"]), 1)
         layers = set([l["name"] for l in themes["themes"][0]["children"][0]["children"]])
         self.assertEquals(layers, set([
-            u"__test_public_layer_not_mapfile",
             u"__test_public_layer2",
         ]))
 
